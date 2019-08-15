@@ -1,4 +1,4 @@
-Virtual Proof-Of-Work miner software
+DelphiOracle RNG Script
 
 Instructions:
 
