@@ -1,0 +1,19 @@
+{
+  "name": "delphi-rng",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Guillaume \"Gnome\" Babin-Tremblay",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "*",
+    "request": "*",
+    "eosjs": "*",
+    "node-fetch": "*",
+    "crypto": "*",
+    "colors": "*"
+  }
+}
