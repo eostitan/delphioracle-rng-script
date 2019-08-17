@@ -1,20 +1,3 @@
-
-	//flow:
-
-	//Validate config
-	//Validate endpoint
-	//Validate account, contract, token, etc...
-	//Get contract state
-
-	//Main loop
-		//Do any remaining work
-		//Commit to next workload
-		//Sleep until end of mining period
-		//Reveal commitment
-		//Do work (throttle algo)
-
-
-
 const { Api, JsonRpc, RpcError } = require('eosjs');
 const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig');      // development only
 //const AbiProvider = require('eosjs/src/abi.abi.json');      // development only
