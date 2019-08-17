@@ -68,6 +68,30 @@ async function executeWritehash(hash, reveal){
 
 }
 
+async function executeForfeit(){
+
+	var obj = {
+    actions: [{
+      account: process.env.ORACLE_CONTRACT,
+      name: 'forfeithash',
+      authorization: [TRX_AUTH_TEMPLATE],
+      data: {
+        owner: process.env.ORACLE_NAME
+      },
+    }]
+  }
+
+  console.log("executeForfeit", JSON.stringify(obj, null, 2));
+
+	const result = await api.transact(obj, {
+    blocksBehind: 3,
+    expireSeconds: 30,
+  });
+
+	return result;
+
+}
+
 
 function randomValueHex(len) {
   return crypto
@@ -77,18 +101,20 @@ function randomValueHex(len) {
 }
 
 
-function main(){
+async function main(){
 
 	var secret = randomValueHex(64);
 	var hash = crypto.createHash('sha256').update(secret).digest('hex'); 
 	var reveal = "";
+
+	var res = await executeForfeit();
 
 	async function loop(){
 
 			secret = randomValueHex(64);
 			hash = crypto.createHash('sha256').update(secret).digest('hex');
 
-			var res = await executeWritehash(hash, reveal);
+			res = await executeWritehash(hash, reveal);
 
 			reveal = secret;
 
