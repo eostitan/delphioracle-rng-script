@@ -99,37 +99,33 @@ async function getCachedSecret() {
 	}).catch((err) => {return ""});
 }
 
-async function main(){
+async function run(forfeit){
 
-	async function loop(){
+	if (forfeit) await executeForfeit();
 
-		var reveal = await getCachedSecret(); // get cached secret from cached.txt or return empty string
-		var accountInfo = await rpc.get_account(process.env.ORACLE_NAME);
-		var cpuAvailable = (accountInfo.cpu_limit.available / accountInfo.cpu_limit.max) * 100;
+	var reveal = await getCachedSecret(); // get cached secret from cached.txt or return empty string
+	var accountInfo = await rpc.get_account(process.env.ORACLE_NAME);
+	var cpuAvailable = (accountInfo.cpu_limit.available / accountInfo.cpu_limit.max) * 100;
 
-		console.log(`${process.env.ORACLE_NAME} has ${cpuAvailable}% CPU available`);
+	console.log(`${process.env.ORACLE_NAME} has ${cpuAvailable}% CPU available`);
 
-		if (cpuAvailable < process.env.MINIMUM_CPU_PERCENT) return; // do not execute if cpu too low
+	if (cpuAvailable < process.env.ORACLE_MINIMUM_CPU_PERCENT) return; // do not execute if cpu too low
 
-		var secret = randomValueHex(64);
-		var hash = crypto.createHash('sha256').update(secret).digest('hex');
+	var secret = randomValueHex(64);
+	var hash = crypto.createHash('sha256').update(secret).digest('hex');
 
-		res = await executeWritehash(hash, reveal)
+	res = await executeWritehash(hash, reveal)
 
-		if (!res.error) {
-			console.log(JSON.stringify(res, null, 2));
-			// cache secret to file for next run
-			fs.writeFile(`${__dirname}/cache.txt`, secret, function(err) {
-				if(err) return console.log(err);
-				return res;
-			});
-		}
-
+	if (!res.error) {
+		console.log(JSON.stringify(res, null, 2));
+		// cache secret to file for next run
+		fs.writeFile(`${__dirname}/cache.txt`, secret, function(err) {
+			if(err) return console.log(err);
+			return res;
+		});
 	}
-
-	loop();
-	setInterval(loop, 60000);
 
 }
 
-main();
+if (process.argv[2] == "--forfeit") run(true);
+else run (false);
