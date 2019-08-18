@@ -47,7 +47,7 @@ async function executeWritehash(hash, reveal){
 		blocksBehind: 3,
 		expireSeconds: 30,
 	}).catch((err) => {
-		console.error(`Error [writeHash]: ${err.json.error.what}`, err);
+		console.error(`Error [writeHash]: ${err.json.error.what}`, JSON.stringify(err, null, 2));
 		return {error: err};
 	});
 
@@ -74,7 +74,7 @@ async function executeForfeit(){
 		blocksBehind: 3,
 		expireSeconds: 30,
 	}).catch((err) => {
-		console.error(`Error [forfeitHash]: ${err.json.error.what}`, err);
+		console.error(`Error [forfeitHash]: ${err.json.error.what}`, JSON.stringify(err, null, 2));
 		return {error: err};
 	});
 
@@ -120,9 +120,12 @@ async function run(forfeit){
 		console.log(JSON.stringify(res, null, 2));
 		// cache secret to file for next run
 		fs.writeFile(`${__dirname}/cache.txt`, secret, function(err) {
-			if(err) return console.log(err);
+			if(err) return console.log(JSON.stringify(err, null, 2));
 			return res;
 		});
+	}
+	else if (res.error.json.error.details[0].message.indexOf("hash mismatch")!=-1){
+		run(true);
 	}
 
 }
