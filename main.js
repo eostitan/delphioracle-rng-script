@@ -47,7 +47,8 @@ async function executeWritehash(hash, reveal){
 		blocksBehind: 3,
 		expireSeconds: 30,
 	}).catch((err) => {
-		console.error(`Error [writeHash]: ${err.json.error.what}`, JSON.stringify(err, null, 2));
+		if (err.json) console.error(`Error [writeHash]: ${err.json.error.what}`, JSON.stringify(err, null, 2));
+		else console.error("Error [writeHash]:", JSON.stringify(err, null, 2));
 		return {error: err};
 	});
 
