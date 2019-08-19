@@ -1,6 +1,6 @@
 DelphiOracle RNG Script
 
-Testing instructions:
+Installation instructions:
 
 1) Copy .env.sample to .env
 
@@ -8,7 +8,13 @@ Testing instructions:
 
 3) npm install
 
-4) node main.js
+To execute:
+
+
+```
+node main.js
+
+```
 
 
 To run continuously, create a shell script and add to crontab.
