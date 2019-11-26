@@ -2,6 +2,6 @@
 
 while [ true ]
 do
-node main.js
+node /delphioracle-rng-script/main.js
 sleep 60
 done
