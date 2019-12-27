@@ -70,6 +70,8 @@ async function executeForfeit(){
 
 	console.log("executeForfeit", JSON.stringify(obj, null, 2));
 
+	fs.unlinkSync(`${__dirname}/cache.txt`);
+
 	const result = await api.transact(obj, {
 		blocksBehind: 3,
 		expireSeconds: 30,
