@@ -103,7 +103,11 @@ async function getCachedSecret() {
 
 			resolve(res.toString());
 		});
-	}).catch((err) => {return ""});
+	}).catch((err) => {
+		console.error("Error [getCachedSecret]:", JSON.stringify(err, null, 2));
+		return "";
+	});
+		
 }
 
 async function run(forfeit){
@@ -133,6 +137,17 @@ async function run(forfeit){
 	}
 	else if (res.error.json.error.details[0].message.indexOf("hash mismatch")!=-1){
 		run(true);
+	}
+	else if (res.error.json.error.details[0].message.indexOf("reveal must be empty")!=-1){
+
+		try{
+			fs.unlinkSync(`${__dirname}/cache.txt`);
+		}
+		catch (ex) {
+
+		}
+		
+		run(false);
 	}
 
 }
