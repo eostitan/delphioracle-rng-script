@@ -9,7 +9,7 @@ require('dotenv').config()
 
 //TODO: Validate config
 var colors = require('colors');
-const defaultPrivateKey = process.env.EOS_PRIV_KEY;					// bob
+const defaultPrivateKey = process.env.EOS_KEY;					// bob
 const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
 
 var api_endpoint = `${ process.env.EOS_PROTOCOL||"http"}://${ process.env.EOS_HOST||"127.0.0.1"}:${process.env.EOS_PORT||"8888"}`;
