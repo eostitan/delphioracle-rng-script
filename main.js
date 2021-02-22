@@ -9,8 +9,16 @@ require('dotenv').config()
 
 //TODO: Validate config
 var colors = require('colors');
-const defaultPrivateKey = process.env.EOSIO_PRIV_KEY;					// bob
-const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
+
+// Setup signatures, using cosigner if available
+let privateKeys = [];
+let cosign = false;
+if (process.env.EOSIO_COSIGN_PRIV_KEY !== undefined) {
+    cosign = true;
+    privateKeys.push(process.env.EOSIO_COSIGN_PRIV_KEY);
+}
+privateKeys.push(process.env.EOSIO_PRIV_KEY);
+const signatureProvider = new JsSignatureProvider(privateKeys);
 
 var api_endpoint = `${ process.env.EOSIO_PROTOCOL||"http"}://${ process.env.EOSIO_HOST||"127.0.0.1"}:${process.env.EOSIO_PORT||"8888"}`;
 
@@ -21,10 +29,18 @@ const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), te
 var crypto = require('crypto');
 var fs = require('fs');
 
-const TRX_AUTH_TEMPLATE = {
+// Setup authorization, using cosigner if available
+let authorization = [];
+if (cosign) {
+    authorization.push({
+        actor: process.env.EOSIO_COSIGN_ACCOUNT,
+        permission: process.env.EOSIO_COSIGN_PERMISSION,
+    });
+}
+authorization.push({
 	actor: `${process.env.ORACLE_NAME}`,
 	permission: `${process.env.ORACLE_PERMISSION||"active"}`,
-}
+});
 
 async function executeWritehash(hash, reveal){
 
@@ -32,7 +48,7 @@ async function executeWritehash(hash, reveal){
 		actions: [{
 			account: process.env.ORACLE_CONTRACT,
 			name: 'writehash',
-			authorization: [TRX_AUTH_TEMPLATE],
+			authorization: authorization,
 			data: {
 				owner: process.env.ORACLE_NAME,
 				hash: hash,
@@ -61,7 +77,7 @@ async function executeForfeit(){
 		actions: [{
 			account: process.env.ORACLE_CONTRACT,
 			name: 'forfeithash',
-			authorization: [TRX_AUTH_TEMPLATE],
+			authorization: authorization,
 			data: {
 				owner: process.env.ORACLE_NAME
 			}
@@ -115,10 +131,14 @@ async function run(forfeit){
 	if (forfeit) await executeForfeit();
 
 	var reveal = await getCachedSecret(); // get cached secret from cached.txt or return empty string
-	var accountInfo = await rpc.get_account(process.env.ORACLE_NAME);
+    let accountName = process.env.ORACLE_NAME;
+    if (cosign) {
+        accountName = process.env.EOSIO_COSIGN_ACCOUNT;
+    }
+	var accountInfo = await rpc.get_account(accountName);
 	var cpuAvailable = (accountInfo.cpu_limit.available / accountInfo.cpu_limit.max) * 100;
 
-	console.log(`${process.env.ORACLE_NAME} has ${cpuAvailable}% CPU available`);
+	console.log(`${accountName} has ${cpuAvailable}% CPU available`);
 
 	if (cpuAvailable < process.env.ORACLE_MINIMUM_CPU_PERCENT) return; // do not execute if cpu too low
 
