@@ -31,10 +31,11 @@ async function executeWritehash(hash, reveal){
 	var obj = {
 		actions: [{
 			account: process.env.ORACLE_CONTRACT,
-			name: 'writehash',
+			name: 'commit',
 			authorization: [TRX_AUTH_TEMPLATE],
 			data: {
-				owner: process.env.ORACLE_NAME,
+				oracle: process.env.ORACLE_NAME,
+				contract: process.env.CONTRACT_NAME,
 				hash: hash,
 				reveal: reveal
 			},
@@ -47,6 +48,7 @@ async function executeWritehash(hash, reveal){
 		blocksBehind: 3,
 		expireSeconds: 30,
 	}).catch((err) => {
+		console.log(err)
 		if (err.json) console.error(`Error [writeHash]: ${err.json.error.what}`, JSON.stringify(err, null, 2));
 		else console.error("Error [writeHash]:", JSON.stringify(err, null, 2));
 		return {error: err};
@@ -61,10 +63,11 @@ async function executeForfeit(){
 	var obj = {
 		actions: [{
 			account: process.env.ORACLE_CONTRACT,
-			name: 'forfeithash',
+			name: 'forfeit',
 			authorization: [TRX_AUTH_TEMPLATE],
 			data: {
-				owner: process.env.ORACLE_NAME
+				oracle: process.env.ORACLE_NAME,
+				contract: process.env.CONTRACT_NAME
 			}
 		}]
 	}
@@ -76,6 +79,34 @@ async function executeForfeit(){
 		expireSeconds: 30,
 	}).catch((err) => {
 		console.error(`Error [forfeitHash]: ${err.json.error.what}`, JSON.stringify(err, null, 2));
+		return {error: err};
+	});
+
+	return result;
+
+}
+
+async function executeNextperiod(){
+
+	var obj = {
+		actions: [{
+			account: process.env.ORACLE_CONTRACT,
+			name: 'nextperiod',
+			authorization: [TRX_AUTH_TEMPLATE],
+			data: {
+				// oracle: process.env.ORACLE_NAME,
+				contract: process.env.CONTRACT_NAME
+			}
+		}]
+	}
+
+	console.log("executeNextperiod", JSON.stringify(obj, null, 2));
+
+	const result = await api.transact(obj, {
+		blocksBehind: 3,
+		expireSeconds: 30,
+	}).catch((err) => {
+		console.error(`Error [nextperiod]: ${err.json.error.what}`, JSON.stringify(err, null, 2));
 		return {error: err};
 	});
 
@@ -112,7 +143,7 @@ async function run(forfeit){
 
 	if (cpuAvailable < process.env.ORACLE_MINIMUM_CPU_PERCENT) return; // do not execute if cpu too low
 
-	var secret = randomValueHex(64);
+	var secret = JSON.stringify({value: Math.floor(Math.random() * 10000)});
 	var hash = crypto.createHash('sha256').update(secret).digest('hex');
 
 	res = await executeWritehash(hash, reveal)
@@ -125,8 +156,21 @@ async function run(forfeit){
 			return res;
 		});
 	}
+	else if (res.error.json.error.details[0].message.indexOf("reveal must be empty string on first commit call")!=-1){
+		try{
+			fs.unlinkSync(`${__dirname}/cache.txt`);
+		} catch(e) {}
+		run();
+	}
+	else if (res.error.json.error.details[0].message.indexOf("must wait for start_time + frequency before calling nextperiod")!=-1){
+		setTimeout(run, 5000);
+	}
 	else if (res.error.json.error.details[0].message.indexOf("hash mismatch")!=-1){
 		run(true);
+	}
+	else if (res.error.json.error.details[0].message.indexOf("oracle has already submitted a value for this period.")!=-1){
+		await executeNextperiod();
+		run();
 	}
 
 }
